@@ -1,0 +1,69 @@
+# ================================================
+# 简历模板项目 .gitignore
+# ================================================
+
+# -------- 系统/编辑器垃圾 --------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# VSCode / IDE 配置（团队协作可选，个人项目可留）
+# .vscode/
+# .idea/
+
+# -------- 临时测试文件 --------
+*.test.html
+*.tmp.html
+*.debug.html
+temp_*.html
+test_*.html
+
+# -------- 导出的 PDF/简历（避免把个人简历提交到公共仓库）--------
+*.pdf
+导出*.pdf
+resume.pdf
+简历*.pdf
+简历导出*.pdf
+个人简历*.pdf
+
+# -------- 个人数据备份 --------
+*.json
+导出数据*.json
+backup_*.json
+resume-data-*.json
+
+# -------- TXT 纯文本导出 --------
+导出*.txt
+resume.txt
+
+# -------- 图片头像导出 --------
+*.jpg
+*.jpeg
+*.png
+!resume-project-analysis/**/*.png
+!resume-project-analysis/**/*.jpg
+
+# -------- Windows 执行脚本 --------
+*.bat
+*.ps1
+*.cmd
+
+# -------- node_modules（虽然本项目不用，但以后加工具链也没事）--------
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# -------- 日志 --------
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# ================================================
+# 显式声明哪些必须包含（优先级最高，! 前缀表示不忽略）
+# ================================================
+!index.html
+!README.md
+!DEPLOY.md
+!resume-project-analysis/**
