@@ -21926,18 +21926,25 @@ function applyCustomStyle() {
       pg.style.fontFamily = c.font || '';
       pg.style.background = c.bg || '#fff';
     });
-    root.querySelectorAll('.r-clean, .r-modern, .r-professional, .r-creative, .r-ribbon, .r-compact, .r-light-shadow, .r-magic-purple, .r-geek-blue, .r-business-pro, .r-minimal-pro, .r-creative-designer, .r-timeline-pro, .r-creative-split, .r-card-lite, .r-soft-block, .r-gradient-dark').forEach(function (el) {
-      if (c.bg && c.bg.toLowerCase() !== '#ffffff') el.style.background = c.bg;
-    });
+    root.querySelectorAll('.r-classic, .r-modern, .r-elegant, .r-clean, .r-professional, .r-creative, .r-terracotta, .r-timeline, .r-swiss, .r-blocks, .r-gradient-dark, .r-split, .r-ribbon, .r-compact, .r-light-shadow, .r-magic-purple, .r-geek-blue, .r-card-lite, .r-soft-block, .r-business-pro, .r-minimal-pro, .r-creative-designer, .r-timeline-pro, .r-creative-split, .r-minimal-pure, .r-champion-blue, .r-lucky-red, .r-tech-geek, .r-fresh-spring, .r-diffuse-glass, .r-neon-geo').forEach(function (el) { if (c.bg && c.bg.toLowerCase() !== '#ffffff') el.style.background = c.bg; });
     /* ===== 光影模板增强：侧栏深色背景不再是死海军灰，跟随 c.primary 色相做"同色深暗渐变" =====
        保留"阴影"氛围（L 12-18% 保持很暗），但色相 = 主色色相，这样切换主题后整个光影
        侧栏的整体冷暖倾向也会跟随，用户能直观感受到"样式随操作变化"。 */
+    /* ===== 光影模板增强：侧栏深色背景跟随 c.primary 暗化，同时保留 bands 写入的图案层 =====
+       注意：bands.forEach() 在我们之后才运行（本函数 22207 行 bands.forEach），所以这里不能直接覆盖 style.background
+       （否则图案会被清除，导致「嵌入图案不生效」bug）。
+       方案：在侧栏元素上暂存「深暗渐变底」字符串，等 bands.forEach 写完 pat + 渐变 + 图片 后，再在 bands.forEach()
+       之后的统一步骤里合并图层 → 或者更稳妥：这里设置 CSS 变量 --ls-sidebar-bg，在 CSS 中用 background-image 叠加。
+       最简实现：给侧栏加 data-ls-bg 属性，然后在 bands.forEach 结束后读取并拼接 background。 */
+    var pHB = hexToHsl(c.primary);
+    var dB1 = hslToHex(pHB.h, Math.max(pHB.s - 5, 12),  Math.max(Math.round(pHB.l * 0.22), 12));
+    var dB2 = hslToHex(pHB.h, Math.max(pHB.s - 8, 10),  Math.max(Math.round(pHB.l * 0.28), 15));
+    var dB3 = hslToHex(pHB.h, Math.max(pHB.s - 10, 8),  Math.max(Math.round(pHB.l * 0.34), 18));
+    var lsSidebarBg = 'linear-gradient(160deg, ' + dB1 + ' 0%, ' + dB2 + ' 40%, ' + dB3 + ' 100%)';
     root.querySelectorAll('.r-ls-sidebar').forEach(function (sidebar) {
-      var pH = hexToHsl(c.primary);
-      var d1 = hslToHex(pH.h, Math.max(pH.s - 5, 12),  Math.max(Math.round(pH.l * 0.22), 12));
-      var d2 = hslToHex(pH.h, Math.max(pH.s - 8, 10),  Math.max(Math.round(pH.l * 0.28), 15));
-      var d3 = hslToHex(pH.h, Math.max(pH.s - 10, 8),  Math.max(Math.round(pH.l * 0.34), 18));
-      sidebar.style.background = 'linear-gradient(160deg, ' + d1 + ' 0%, ' + d2 + ' 40%, ' + d3 + ' 100%)';
+      /* 存入 dataset，bands.forEach 之后合并（避免覆盖图案） */
+      sidebar.setAttribute('data-ls-sidebar-bg', lsSidebarBg);
+      /* 先不写 background，等 bands.forEach 处理完再合并写 */
     });
   } else {
     /* 非自定义：同样清空页面和模板元素上残留的内联字体/背景 */
@@ -21945,12 +21952,28 @@ function applyCustomStyle() {
       pg.style.removeProperty('font-family');
       pg.style.removeProperty('background');
     });
-    root.querySelectorAll('.r-clean, .r-modern, .r-professional, .r-creative, .r-ribbon, .r-compact, .r-light-shadow, .r-magic-purple, .r-geek-blue, .r-business-pro, .r-minimal-pro, .r-creative-designer, .r-timeline-pro, .r-creative-split, .r-card-lite, .r-soft-block, .r-gradient-dark').forEach(function (el) {
-      el.style.removeProperty('background');
+    root.querySelectorAll('.r-classic, .r-modern, .r-elegant, .r-clean, .r-professional, .r-creative, .r-terracotta, .r-timeline, .r-swiss, .r-blocks, .r-gradient-dark, .r-split, .r-ribbon, .r-compact, .r-light-shadow, .r-magic-purple, .r-geek-blue, .r-card-lite, .r-soft-block, .r-business-pro, .r-minimal-pro, .r-creative-designer, .r-timeline-pro, .r-creative-split, .r-minimal-pure, .r-champion-blue, .r-lucky-red, .r-tech-geek, .r-fresh-spring, .r-diffuse-glass, .r-neon-geo').forEach(function (el) { el.style.removeProperty('background'); });
+    /* 新模板 7 件套（champion-blue ~ terracotta）专属变量清理：
+       customized=true 时 updateNewTemplateColors() 会在每个新模板根元素上用 setProperty 写入
+       40+ 个 --cb-primary / --lr-primary / --tg-text-secondary / ... 内联变量。
+       当用户点「恢复默认样式」或撤销自定义颜色（customized=false）时，
+       不清除这些内联变量 → 旧主题色变量残留 + body.theme-* 继承的变量同时生效 → 颜色叠加/错位显脏。
+       这里对 7 个新模板根元素统一调用 removeProperty 清理，保证回到 CSS 默认值。 */
+    var NEW_TMPL_ROOT_CLASSES = ['.r-champion-blue', '.r-lucky-red', '.r-tech-geek', '.r-fresh-spring', '.r-diffuse-glass', '.r-neon-geo', '.r-terracotta'];
+    var NEW_TMPL_CUSTOM_VARS = [ '--cb-primary', '--cb-accent', '--cb-highlight', '--cb-light', '--cb-bg', '--cb-card-bg', '--cb-text', '--lr-primary', '--lr-accent', '--lr-highlight', '--lr-light', '--lr-bg', '--lr-card-bg', '--lr-text', '--tg-primary', '--tg-accent', '--tg-highlight', '--tg-light', '--tg-bg', '--tg-card-bg', '--tg-body-bg', '--tg-text', '--tg-text-primary', '--tg-text-secondary', '--tg-text-muted', '--fs-primary', '--fs-accent', '--fs-highlight', '--fs-light', '--fs-bg', '--fs-card-bg', '--fs-text', '--dg-primary', '--dg-accent', '--dg-highlight', '--dg-light', '--dg-bg', '--dg-card-bg', '--dg-text', '--ng-primary', '--ng-accent', '--ng-highlight', '--ng-light', '--ng-bg', '--ng-card-bg', '--ng-text', '--ng-text-secondary', '--ng-text-muted', '--ng-border', '--t-primary', '--t-header-bg', '--t-soft' ];
+    root.querySelectorAll(NEW_TMPL_ROOT_CLASSES.join(',')).forEach(function (tEl) {
+      for (var vi = 0; vi < NEW_TMPL_CUSTOM_VARS.length; vi++) {
+        tEl.style.removeProperty(NEW_TMPL_CUSTOM_VARS[vi]);
+      }
     });
     /* 还原光影侧栏到 CSS 原生深色渐变（移除内联 background） */
     root.querySelectorAll('.r-ls-sidebar').forEach(function (sidebar) {
       sidebar.style.removeProperty('background');
+    });
+    /* 同时清除光影模板上残留的 --ls-glow 内联变量（customized=true 时由 22291 行写入），
+       否则恢复默认样式/切主题后，旧主题的 glow 色仍然挂在元素上，和新主题色层叠显脏（颜色叠加）。 */
+    root.querySelectorAll('.r-light-shadow').forEach(function (lsEl) {
+      lsEl.style.removeProperty('--ls-glow');
     });
   }
   
@@ -22025,6 +22048,10 @@ function applyCustomStyle() {
      已经在 PATCH C 用 c.primary 写过一次（值与这里推导的一致），这里再写一遍不影响，
      主要为 customized=false + 主题按钮切换 的场景兜底。 */
   function applyLightShadowSidebar() {
+    /* PATCH C（customized=true 分支 21932-21941）与 bands.forEach 已经正确写入侧栏底色 + 图案多图层，
+       这里只在 customized=false + 主题切换场景做兜底（D.customColor 清空，但侧栏仍需跟随 body.theme-* 的 --primary 暗化）。
+       避免重复写两次 background 导致图层顺序/颜色叠加显脏。 */
+    if (customized) return;
     var curPrimary = getComputedStyle(root).getPropertyValue('--primary').trim() || '#2563eb';
     if (!curPrimary || curPrimary[0] !== '#') return;
     try {
@@ -22120,7 +22147,7 @@ function applyCustomStyle() {
   
   var op = (typeof c.opacity === 'number' ? c.opacity : 0.08);
   var pat = (c.headerPattern && c.headerPattern !== 'none') ? patternLayer(c.headerPattern, op) : null;
-  var sel = '[class*="r-side"],[class*="r-left"],.r-cs-left,[class*="r-top"],[class*="r-banner"],[class*="r-hero"],[class*="r-gd-head"],[class*="r-c-header"],[class*="r-cl-header"],[class*="r-sb-header"],[class*="pro-sidebar"],[class*="r-mp-banner"],[class*="r-gb-banner"],[class*="r-bp-side"],[class*="r-tp-hero"]';
+  var sel = '[class*="r-side"],[class*="r-left"],.r-cs-left,[class*="r-top"],[class*="r-banner"],[class*="r-hero"],[class*="r-gd-head"],[class*="r-c-header"],[class*="r-cl-header"],[class*="r-sb-header"],[class*="pro-sidebar"],[class*="r-mp-banner"],[class*="r-gb-banner"],[class*="r-bp-side"],[class*="r-tp-hero"],.r-blocks-head,.r-blocks-top,.r-cb-exp-header,.r-cb-header,.r-cb-sidebar,.r-cd-header,.r-cd-top,.r-cl-top,.r-cs-exp-header,.r-cs-header,.r-dg-header,.r-fs-hero,.r-gd-top,.r-head,.r-li-top,.r-lr-card-header,.r-ls-sidebar,.r-mp-header,.r-mp-top,.r-ng-hero,.r-sb-top,.r-sw-head,.r-tg-hero,.r-tl-top';
   var raw = root.querySelectorAll(sel);
   var EXCLUDE = /(name|title|ico|item|sec|section|block|content|body|sub|tag|desc|text|inner|wrap|row|grid|skill|fill|avatar|meta)$/;
   var bands = [];
@@ -22131,8 +22158,10 @@ function applyCustomStyle() {
     /* creative-split 的 header 不进 bands，由单独逻辑处理为透明 */
     if (el.classList && el.classList.contains('r-cs-header')) return;
     if (el.classList && el.classList.contains('r-cs-header-top')) return;
-    /* 光影模板侧栏不进 bands，保持原生深色渐变背景 */
-    if (el.classList && el.classList.contains('r-ls-sidebar')) return;
+    /* 光影侧栏纳入 bands 统一处理：patternLayer 图案叠加 + 自定义背景/渐变 都正确走下面 forEach 管线，
+       （之前排除导致「嵌入图案对光影无效」bug）。侧栏深色渐变由 applyLightShadowSidebar() 独立写到内联 style.background，
+       与 bands.forEach 里的 pat + headerType + headerImage 多图层拼接共存：layer 顺序 [pattern] [渐变overlay] [user img] [sidebar内联深色渐变底色] */
+    // (光影侧栏不再排除)
     /* 只保留最外层的顶栏/侧栏元素，子元素（个人信息容器等）不重复设置背景 */
     if (el.parentElement) {
       var parent = el.parentElement.closest(sel);
@@ -22268,6 +22297,35 @@ function applyCustomStyle() {
     el.querySelectorAll('.r-item').forEach(function (i) {
       if (!i.style.borderLeft) i.style.borderBottom = '1px solid ' + itemBd;
     });
+  });
+  /* ===== 光影侧栏合并最终 background：[pattern + overlay + img] + [深暗渐变底] =====
+     运行顺序：bands.forEach(22264) 先把 pat / 渐变overlay / headerImage 写到
+     el.style.backgroundImage / backgroundSize / backgroundRepeat（上层亮图层）；
+     这里在其之后追加深暗渐变「底色层」作为最底下第 3 层，
+     避免之前顺序颠倒 → 深暗渐变被 bands.forEach 覆盖掉 → 侧栏又变亮 + 图案丢失。 */
+  root.querySelectorAll('.r-ls-sidebar[data-ls-sidebar-bg]').forEach(function (sidebar) {
+    var bottomBg = sidebar.getAttribute('data-ls-sidebar-bg') || '';
+    if (!bottomBg) return;
+    var cs = sidebar.style;
+    var existingImg = (cs.backgroundImage || '').trim();
+    var existingSize = (cs.backgroundSize || '').trim();
+    var existingRepeat = (cs.backgroundRepeat || '').trim();
+    var bgImages = [];
+    var bgSizes = [];
+    var bgRepeats = [];
+    if (existingImg && existingImg !== 'none') {
+      bgImages.push(existingImg);
+      bgSizes.push(existingSize || 'auto');
+      bgRepeats.push(existingRepeat || 'repeat');
+    }
+    bgImages.push(bottomBg);
+    bgSizes.push('100% 100%');
+    bgRepeats.push('no-repeat');
+    cs.backgroundImage = bgImages.join(', ');
+    cs.backgroundSize  = bgSizes.join(', ');
+    cs.backgroundRepeat = bgRepeats.join(', ');
+    cs.backgroundPosition = cs.backgroundPosition || 'center';
+    sidebar.removeAttribute('data-ls-sidebar-bg');
   });
   /* 主内容区标题颜色同步：card-lite/soft-block/swiss/blocks/minimal-pro/creative-designer/timeline-pro 等模板的标题用了硬编码色 */
   var bodySecColor = c.primary;
