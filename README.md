@@ -100,6 +100,8 @@
 - **导出纯文本 TXT**（复制到 Word / 版本管理 diff）
 
 ---
+![Uploading temple.png…]()
+
 
 ## 🔒 隐私与安全
 
