@@ -99,8 +99,7 @@
 - **导出数据备份 JSON**（换电脑 / 跨浏览器迁移）
 - **导出纯文本 TXT**（复制到 Word / 版本管理 diff）
 
-temple.png
-
+![简历模板截图](https://raw.githubusercontent.com/ttqw/335_jianli/main/temple.png)
 
 ## 🔒 隐私与安全
 
