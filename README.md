@@ -99,8 +99,7 @@
 - **导出数据备份 JSON**（换电脑 / 跨浏览器迁移）
 - **导出纯文本 TXT**（复制到 Word / 版本管理 diff）
 
----
-![Uploading temple.png…]()
+temple.png
 
 
 ## 🔒 隐私与安全
