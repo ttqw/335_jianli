@@ -19616,7 +19616,7 @@ function exportPDF() {
           page.style.maxWidth = pxW + 'px';
           page.style.margin = '0';
           page.style.boxSizing = 'border-box';
-          page.style.overflow = 'hidden';
+          page.style.overflow = 'visible';
           page.style.pageBreakAfter = 'always';
           page.style.breakAfter = 'page';
         });
@@ -19626,36 +19626,9 @@ function exportPDF() {
           pages[pages.length - 1].style.breakAfter = 'auto';
         }
 
-        /* ============================================================
-           1.5 溢出裁剪 — 防止装饰伪元素负定位导致 scrollWidth 膨胀
-           多个模板的 ::before/::after 使用 top:-100px; right:-100px 等
-           负定位装饰，会使 html2canvas 按 scrollWidth 捕获，导出图片变宽，
-           被 html2pdf 压缩到 A4 页面时比例失调。
-           解决：对所有容器元素强制 overflow:hidden，裁剪溢出区域。
-           ============================================================ */
-        var clipStyle = clonedDoc.createElement('style');
-        clipStyle.textContent =
-          '.resume-page, .resume-pages,' +
-          '.r-classic, .r-modern, .r-elegant, .r-clean, .r-professional,' +
-          '.r-creative, .r-terracotta, .r-timeline-tpl, .r-swiss,' +
-          '.r-blocks, .r-gradient-dark, .r-split, .r-ribbon, .r-compact,' +
-          '.r-light-shadow, .r-magic-purple, .r-geek-blue, .r-card-lite,' +
-          '.r-soft-block, .r-business-pro, .r-minimal-pro, .r-creative-designer,' +
-          '.r-timeline-pro, .r-creative-split, .r-minimal-pure,' +
-          '.r-champion-blue, .r-lucky-red, .r-tech-geek, .r-fresh-spring,' +
-          '.r-diffuse-glass, .r-neon-geo {' +
-          'overflow: hidden !important;' +
-          '}' +
-          /* 头像容器：如果内部使用了 buildAvatar 的 overflow:visible 标记，则保留 visible */
-          '.r-cb-photo, .r-lr-photo, .r-tg-photo, .r-dg-photo, .r-ng-photo, .r-fs-photo, .r-hero-photo, .r-ls-avatar {' +
-          'overflow: hidden !important;' +
-          '}' +
-          /* 对带 data-avatar-overflow="visible" 的容器（buildAvatar 已标记），
-             允许 overflow:visible，保留光环/装饰类头像的外发光效果 */
-          '[data-avatar-overflow="visible"], [data-avatar-overflow="visible"] > * {' +
-          'overflow: visible !important;' +
-          '}';
-        clonedDoc.head.appendChild(clipStyle);
+        /* v6.28: 移除 clipStyle overflow:hidden !important — 该规则与 P0-1 的 visible 修正冲突，
+           导致所有模板容器被强制裁剪，用户导出 PDF/PNG 内容中间截断。
+           装饰伪元素负定位导致 scrollWidth 膨胀的问题，已由上方 pagesContainer overflow:hidden 兜底。 */
 
 
         /* v6.6b: 移除冗余全元素遍历 — freezeStyle CSS 规则已用 #resumeOutput, #resumeOutput * { animation:none !important } 覆盖所有元素 */
@@ -20501,13 +20474,37 @@ function exportPNG() {
 
   setTimeout(function() {
     try {
+      var pxW = paperPxWidth();
       var worker = html2pdf().set({
         html2canvas: {
           scale: 2,
           useCORS: !isFileProtocol,
           allowTaint: isFileProtocol,
           logging: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          onclone: function(clonedDoc) {
+            var clonedRo = clonedDoc.getElementById('resumeOutput');
+            if (!clonedRo) return;
+            clonedRo.style.width = pxW + 'px';
+            clonedRo.style.margin = '0 auto';
+            clonedRo.style.maxWidth = pxW + 'px';
+            clonedRo.style.overflow = 'visible';
+            var pagesContainer = clonedRo.querySelector('.resume-pages');
+            if (pagesContainer) {
+              pagesContainer.style.width = pxW + 'px';
+              pagesContainer.style.display = 'block';
+              pagesContainer.style.gap = '0';
+              pagesContainer.style.padding = '0';
+              pagesContainer.style.overflow = 'hidden';
+            }
+            clonedRo.querySelectorAll('.resume-page').forEach(function(page) {
+              page.style.width = pxW + 'px';
+              page.style.maxWidth = pxW + 'px';
+              page.style.margin = '0';
+              page.style.boxSizing = 'border-box';
+              page.style.overflow = 'visible';
+            });
+          }
         },
         jsPDF: { unit: 'pt', format: 'a4' }
       }).from(ro);
