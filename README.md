@@ -1,6 +1,7 @@
 # 🎨 简历模板编辑器
 
 > **零后端 · 零构建 · 单文件分发** — 把 `index.html` 发给任何人，双击就能用。
+[![点击观看演示视频](https://raw.githubusercontent.com/ttqw/335_jianli/main/temple.png)](https://www.bilibili.com/video/BV1wKMQ6zERo/?spm_id_from=333.1387.upload.video_card.click)
 
 ---
 
