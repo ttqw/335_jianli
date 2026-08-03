@@ -117,3 +117,5 @@
 - html2canvas / jsPDF（MIT License）
 - FontAwesome 6 Icons（Font Awesome Free License）
 - 设计风格参考 [bufancv.com examples](https://bufancv.com/examples)
+-
+- 联系方式 QQ:2804714697 IP:18673647032
